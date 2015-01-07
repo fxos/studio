@@ -1,0 +1,32 @@
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+section {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: scroll;
+}
+
+gaia-list h3 {
+  width: calc(100% - 10px);
+}
+
+gaia-list .action {
+  text-align: center;
+  text-decoration: underline;
+  background: rgba(255, 255, 255, 0.65);
+}
+
+gaia-list .destructive {
+  color: var(--color-destructive);
+}
+
+a.navigation *, a.action *, a.edit * {
+  pointer-events: none;
+}

@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>FxOS Studio</title>
+    <meta name="description" content="Make it your own, share it with everyone.">
+    <meta name="viewport" content="width=device-width">
+    <link rel="stylesheet" href="css/app.css">
+    <link rel="stylesheet" href="css/navigation.css">
+    <link rel="stylesheet" href="css/edit.css">
+
+    <script type="text/javascript" src="js/storage.js" defer></script>
+
+    <script type="text/javascript" src="js/main.js" defer></script>
+    <script type="text/javascript" src="js/details.js" defer></script>
+    <script type="text/javascript" src="js/edit.js" defer></script>
+    <script type="text/javascript" src="js/navigation.js" defer></script>
+
+    <link rel="stylesheet" type="text/css" href="bower_components/base/base.css">
+    <link rel="stylesheet" type="text/css" href="bower_components/gaia-theme/gaia-theme.css">
+    <link rel="stylesheet" type="text/css" href="bower_components/gaia-fonts/style.css">
+    <link rel="stylesheet" type="text/css" href="bower_components/gaia-icons/gaia-icons.css">
+
+    <script src="bower_components/gaia-component/gaia-component.js"></script>
+    <script src="bower_components/gaia-icons/gaia-icons.js"></script>
+    <script src="bower_components/gaia-header/dist/gaia-header.js"></script>
+    <script src="bower_components/gaia-list/gaia-list.js"></script>
+
+    <link rel="prefetch" type="application/l10n" href="data/locales.ini" />
+    <script type="text/javascript" src="js/libs/l10n.js" defer></script>
+  </head>
+  <body class="theme-settings">
+    <section id="main" class="panel">
+      <gaia-header>
+        <h1 data-l10n-id="app_title">FxOS Studio</h1>
+      </gaia-header>
+    </section>
+    <section id="details" class="panel next">
+      <gaia-header>
+        <h1></h1>
+      </gaia-header>
+    </section>
+    <section id="edit" class="panel next">
+      <gaia-header>
+        <h1></h1>
+      </gaia-header>
+      <iframe></iframe>
+      <div id="edit-list">
+      </div>
+    </section>
+  </body>
+</html>
