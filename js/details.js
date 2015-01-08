@@ -3,7 +3,7 @@
 
   var currentTheme = null;
 
-  exports.Details = {
+  var Details = {
     panel: document.getElementById('details'),
     header: document.querySelector('#details gaia-header'),
     title: document.querySelector('#details gaia-header h1'),
@@ -36,11 +36,30 @@
           list.appendChild(link);
         });
 
-        ['Install this theme', 'Fork this theme'].forEach(function(action) {
+        var actions = [
+          {
+            title: 'Install this theme',
+            action: 'install'
+          },
+          {
+            title: 'Fork this theme',
+            action: 'fork'
+          },
+          {
+            title: 'Remove this theme',
+            action: 'remove',
+            css: 'destructive'
+          }
+        ];
+        actions.forEach(function(params) {
           var link = document.createElement('a');
           link.classList.add('action');
+          link.dataset.action = params.action;
+          if (params.css) {
+            link.classList.add(params.css);
+          }
           var title = document.createElement('h3');
-          title.textContent = action;
+          title.textContent = params.title;
           link.appendChild(title);
           list.appendChild(link);
         });
@@ -51,11 +70,58 @@
       });
 
       return this.panel;
+    },
+
+    installTheme: function() {
+      return Generation.installTheme(currentTheme.id);
+    },
+
+    forkTheme: function() {
+      var title = prompt('Title');
+      if (!title) {
+        return Promise.resolve();
+      }
+
+      return Storage.forkTheme(currentTheme, title);
+    },
+
+    removeTheme: function() {
+      return Storage.removeTheme(currentTheme.id);
     }
   };
 
-  exports.Details.panel.addEventListener('click', function(evt) {
+  Details.panel.addEventListener('click', function(evt) {
     var target = evt.target;
+
+    if (target.dataset.action == 'install') {
+      Details.installTheme().then(function() {
+        alert('great success!');
+      }).catch(function(error) {
+        console.log(error);
+      });
+      return;
+    }
+
+    if (target.dataset.action == 'fork') {
+      Details.forkTheme().then(function() {
+        Main.prepareForDisplay();
+        Navigation.pop();
+      }).catch(function(error) {
+        console.log(error);
+      });
+      return;
+    }
+
+    if (target.dataset.action == 'remove') {
+      Details.removeTheme().then(function() {
+        Main.prepareForDisplay();
+        Navigation.pop();
+      }).catch(function(error) {
+        console.log(error);
+      });
+      return;
+    }
+
     if (!target.classList.contains('navigation')) {
       return;
     }
@@ -67,11 +133,13 @@
     }));
   });
 
-  exports.Details.header.addEventListener('action', function(evt) {
+  Details.header.addEventListener('action', function(evt) {
     if (evt.detail.type != 'back') {
       return;
     }
 
     Navigation.pop();
   });
+
+  exports.Details = Details;
 })(window);

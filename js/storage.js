@@ -1,7 +1,6 @@
 (function(exports) {
   'use strict';
 
-  // TODO: make a real IDB backend
   exports.Storage = {
     fetchThemesList: function() {
       return getAllThemes().then(function(themes) {
@@ -18,8 +17,23 @@
       return getTheme(id);
     },
 
+    createTheme: function(title) {
+      var theme = getTemplate(title);
+      return setTheme(theme);
+    },
+
+    forkTheme: function(theme, title) {
+      delete theme.id;
+      theme.title = title;
+      return setTheme(theme);
+    },
+
     updateTheme: function(theme) {
       return setTheme(theme);
+    },
+
+    removeTheme: function(id) {
+      return deleteTheme(id);
     }
   };
 
@@ -74,6 +88,33 @@
       }
     }
   ];
+
+  function getTemplate(title) {
+    return {
+      title: title,
+      sections: {
+        'Basics': {
+          '--background': '#ffffff',
+          '--text-color': '#4d4d4d',
+          '--highlight-color': '#00caf2',
+          '--link-color': '#00caf2',
+          '--border-color': '#e7e7e7',
+          '--button-background': '#f4f4f4',
+          '--input-background': '#ffffff',
+          '--input-color': '#333333',
+          '--input-clear-background': '#909ca7',
+        },
+        'Header': {
+          '--header-background': '#ffffff',
+          '--header-color': '#4d4d4d',
+          '--header-icon-color': '#4d4d4d',
+          '--header-button-color': '#00caf2',
+          '--header-disabled-button-color': '#e7e7e7',
+          '--header-action-button-color': '#4d4d4d'
+        }
+      }
+    };
+  }
 
   var database;
   function getDB() {
@@ -146,6 +187,21 @@
       return new Promise(function(resolve, reject) {
         var store = db.transaction('themes', 'readwrite').objectStore('themes');
         var req = store.put(theme);
+        req.onsuccess = function(e) {
+          resolve(e.target.result);
+        };
+        req.onerror = function(e) {
+          reject(e.target.errorCode);
+        };
+      });
+    });
+  }
+
+  function deleteTheme(id) {
+    return getDB().then(function(db) {
+      return new Promise(function(resolve, reject) {
+        var store = db.transaction('themes', 'readwrite').objectStore('themes');
+        var req = store.delete(id);
         req.onsuccess = function(e) {
           resolve(e.target.result);
         };

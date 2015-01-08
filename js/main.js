@@ -1,7 +1,7 @@
 (function(exports) {
   'use strict';
 
-  exports.Main = {
+  var Main = {
     panel: document.getElementById('main'),
     header: document.querySelector('#main gaia-header'),
     title: document.querySelector('#main gaia-header h1'),
@@ -32,6 +32,7 @@
 
         var link = document.createElement('a');
         link.classList.add('action');
+        link.dataset.action = 'create';
         var title = document.createElement('h3');
         title.textContent = 'Make your own theme';
         link.appendChild(title);
@@ -43,11 +44,28 @@
       });
 
       return this.panel;
+    },
+
+    createTheme: function() {
+      var title = prompt('Title');
+      if (!title) {
+        return;
+      }
+      Storage.createTheme(title).then(() => {
+        this.prepareForDisplay();
+      }).catch(function(error) {
+        console.log(error);
+      });
     }
   };
 
-  exports.Main.panel.addEventListener('click', function(evt) {
+  Main.panel.addEventListener('click', function(evt) {
     var target = evt.target;
+    if (target.dataset.action == 'create') {
+      Main.createTheme();
+      return;
+    }
+
     if (!target.classList.contains('navigation')) {
       return;
     }
@@ -58,4 +76,5 @@
     }));
   });
 
+  exports.Main = Main;
 })(window);
