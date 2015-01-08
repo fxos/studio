@@ -17,10 +17,10 @@
         themes.forEach(function(theme) {
           var link = document.createElement('a');
           link.classList.add('navigation');
-          link.dataset.theme = theme;
+          link.dataset.themeId = theme.id;
 
           var title = document.createElement('h3');
-          title.textContent = theme;
+          title.textContent = theme.title;
           link.appendChild(title);
 
           var forward = document.createElement('i');
@@ -52,9 +52,9 @@
       return;
     }
 
-    var themeKey = target.dataset.theme;
+    var themeId = parseInt(target.dataset.themeId);
     Navigation.push(Details.prepareForDisplay({
-      key: themeKey
+      id: themeId
     }));
   });
 

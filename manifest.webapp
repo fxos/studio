@@ -14,7 +14,9 @@
     "url": "http://example.com"
   },
   "type": "certified",
-  "permissions": {},
+  "permissions": {
+    "storage": {}
+  },
   "installs_allowed_from": [
     "*"
   ],

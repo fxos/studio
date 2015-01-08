@@ -1,6 +1,7 @@
 (function(exports) {
   'use strict';
 
+  var currentTheme = null;
   var currentSection = null;
 
   var Edit = {
@@ -11,6 +12,8 @@
     iframe: document.querySelector('#edit iframe'),
 
     prepareForDisplay: function(params) {
+      currentTheme = params.theme;
+
       this.title.textContent = params.section;
       this.header.setAttr('action', 'back');
 
@@ -20,7 +23,7 @@
       }
 
       var list = document.createElement('gaia-list')
-      currentSection = params.theme.sections[params.section];
+      currentSection = currentTheme.sections[params.section];
 
       this.iframe.src = '/' + params.section + '-preview.html';
       this.iframe.onload = () => {
@@ -60,12 +63,16 @@
     change: function(key) {
       // TODO: put a real color picker
       var value = prompt(key, currentSection[key]);
-      this.iframe.contentDocument.body.style.setProperty(key, value);
+      currentSection[key] = value;
 
       var elem = this.list.querySelector('[data-id=' + key + ']')
       elem.textContent = value;
 
-      // TODO: make the change persistent
+      Storage.updateTheme(currentTheme).then(() => {
+        this.iframe.contentDocument.body.style.setProperty(key, value);
+      }).catch(function(error) {
+        console.log(error);
+      });
     }
   };
 

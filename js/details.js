@@ -14,7 +14,7 @@
         this.panel.removeChild(currentList);
       }
 
-      Storage.fetchTheme(params.key).then((theme) => {
+      Storage.fetchTheme(params.id).then((theme) => {
         currentTheme = theme;
         this.title.textContent = theme.title;
         this.header.setAttr('action', 'back');
