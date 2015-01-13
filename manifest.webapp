@@ -15,7 +15,10 @@
   },
   "type": "certified",
   "permissions": {
-    "storage": {}
+    "storage": {},
+    "webapps-manage": {},
+    "device-storage:sdcard": { "access": "readwrite" },
+    "settings": { "access": "readwrite" }
   },
   "installs_allowed_from": [
     "*"

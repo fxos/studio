@@ -94,11 +94,9 @@
     var target = evt.target;
 
     if (target.dataset.action == 'install') {
-      Details.installTheme().then(function() {
+      Details.installTheme().then(() => {
         alert('great success!');
-      }).catch(function(error) {
-        console.log(error);
-      });
+      }).catch(console.error);
       return;
     }
 
