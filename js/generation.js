@@ -7,7 +7,7 @@
     var sdcard = navigator.getDeviceStorage('sdcard');
     return new Promise((resolve, reject) => {
       function sendError(msg) {
-        console.error(msg);
+        console.log(msg);
         reject(msg);
       }
 
@@ -57,13 +57,13 @@
     var app = new AppZip();
     app.metaData = {
       installOrigin: 'http://gaiamobile.org',
-      manifestURL: 'app://' + appId + '.gaiamobile.org/update.webapp',
+      manifestURL: 'app://theme' + appId + '.gaiamobile.org/update.webapp',
       version: 1
     };
 
     app.manifest = {
       name: theme.title,
-      package_path: '/application.zip'
+      package_path: '/application.zip',
     };
 
     // Build a simple package with a manifest and index.html
@@ -72,7 +72,8 @@
     var manifest = {
       name: theme.title,
       role: "theme",
-      type: "certified"
+      type: "certified",
+      origin: 'app://theme' + appId + '.gaiamobile.org'
     };
 
     return new Promise((resolve, reject) => {

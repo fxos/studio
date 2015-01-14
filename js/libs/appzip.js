@@ -31,7 +31,7 @@
 
   PackageHelper.prototype = {
     init: function() {
-      console.log('PackageHelper.init()');
+      dump('PackageHelper.init()');
       var self = this;
       return new Promise((resolve, reject) => {
         zip.createWriter(new zip.BlobWriter(),
@@ -135,11 +135,10 @@
             }
           }
 
-          addMeta().then(addManifest)
-                   .then(addPackage)
-                   .then(zip.asBlob.bind(zip))
-                   .then(resolve).
-                   .catch(reject);
+          return addMeta().then(addManifest)
+                          .then(addPackage)
+                          .then(zip.asBlob.bind(zip))
+                          .then(resolve);
         }, reject);
       });
     }
