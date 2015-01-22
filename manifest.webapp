@@ -15,6 +15,7 @@
   },
   "type": "certified",
   "permissions": {
+    "themeable":{},
     "storage": {},
     "webapps-manage": {},
     "device-storage:sdcard": { "access": "readwrite" },

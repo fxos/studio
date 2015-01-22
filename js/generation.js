@@ -98,14 +98,20 @@
   }
 
   function userStyle(theme) {
-    var str = ':root {\n';
-    Object.keys(theme.sections).forEach(function(sectionKey) {
-      var section = theme.sections[sectionKey];
-      Object.keys(section).forEach(function(key) {
-        str += key + ': ' + section[key] + ';\n';
+    var roots = [':root', '.theme-productivity', '.theme-communications',
+                 '.theme-settings', '.theme-media'];
+
+    var str = '';
+    roots.forEach(function(root) {
+      str += root + ' {\n';
+      Object.keys(theme.sections).forEach(function(sectionKey) {
+        var section = theme.sections[sectionKey];
+        Object.keys(section).forEach(function(key) {
+          str += key + ': ' + section[key] + ';\n';
+        });
       });
+      str += '}\n';
     });
-    str += '}';
     return str;
   }
 
