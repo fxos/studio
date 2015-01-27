@@ -23,6 +23,11 @@ gaia-list .action {
   background: rgba(255, 255, 255, 0.65);
 }
 
+gaia-list .action.disabled {
+  pointer-events: none;
+  color: var(--header-disabled-button-color);
+}
+
 gaia-list .destructive {
   color: var(--color-destructive);
 }

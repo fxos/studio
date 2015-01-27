@@ -94,8 +94,9 @@
     var target = evt.target;
 
     if (target.dataset.action == 'install') {
+      target.classList.add('disabled');
       Details.installTheme().then(() => {
-        alert('great success!');
+        target.classList.remove('disabled');
       }).catch(console.error);
       return;
     }
