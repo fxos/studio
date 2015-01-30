@@ -9,6 +9,7 @@
     "60": "/img/icons/icon60x60.png",
     "128": "/img/icons/icon128x128.png"
   },
+  "orientation": "default",
   "developer": {
     "name": "Your name",
     "url": "http://example.com"
