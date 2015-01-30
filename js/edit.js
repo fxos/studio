@@ -3,19 +3,56 @@
 
   var currentTheme = null;
   var currentSection = null;
+  var currentKey = null;
 
   var Edit = {
     panel: document.getElementById('edit'),
     header: document.querySelector('#edit gaia-header'),
     title: document.querySelector('#edit gaia-header h1'),
     list: document.querySelector('#edit-list'),
+    editColor: document.querySelector('#edit-color'),
+    picker: document.querySelector('#edit-color gaia-color-picker'),
     iframe: document.querySelector('#edit iframe'),
+    cancel: document.querySelector('#edit-color .cancel'),
+    save: document.querySelector('#edit-color .save'),
 
     prepareForDisplay: function(params) {
       currentTheme = params.theme;
 
       this.title.textContent = params.section;
       this.header.setAttr('action', 'back');
+
+      this.picker.onchange = () => {
+        if (!currentKey) {
+          return;
+        }
+        var value = this.picker.value;
+        this.iframe.contentDocument.body.style.setProperty(currentKey, value);
+      };
+
+      this.cancel.onclick = () => {
+        var value = currentSection[currentKey];
+        this.iframe.contentDocument.body.style.setProperty(currentKey, value);
+        this.editColor.classList.remove('editing');
+      };
+
+      this.save.onclick = () => {
+        if (!currentKey) {
+          return;
+        }
+
+        var value = this.picker.value;
+        currentSection[currentKey] = value;
+
+        var elem = this.list.querySelector('[data-id=' + currentKey + ']')
+        elem.textContent = value;
+
+        Storage.updateTheme(currentTheme).then(() => {
+          this.editColor.classList.remove('editing');
+        }).catch(function(error) {
+          console.log(error);
+        });
+      };
 
       var currentList = this.list.querySelector('gaia-list');
       if (currentList) {
@@ -60,19 +97,10 @@
       return this.panel;
     },
 
-    change: function(key) {
-      // TODO: put a real color picker
-      var value = prompt(key, currentSection[key]);
-      currentSection[key] = value;
-
-      var elem = this.list.querySelector('[data-id=' + key + ']')
-      elem.textContent = value;
-
-      Storage.updateTheme(currentTheme).then(() => {
-        this.iframe.contentDocument.body.style.setProperty(key, value);
-      }).catch(function(error) {
-        console.log(error);
-      });
+    pick: function(key) {
+      currentKey = key;
+      this.picker.value = currentSection[key];
+      this.editColor.classList.add('editing');
     }
   };
 
@@ -91,7 +119,7 @@
       return;
     }
 
-    Edit.change(target.dataset.key);
+    Edit.pick(target.dataset.key);
   });
 
   exports.Edit = Edit;

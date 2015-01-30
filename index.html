@@ -29,6 +29,8 @@
     <script src="bower_components/gaia-icons/gaia-icons.js"></script>
     <script src="bower_components/gaia-header/dist/gaia-header.js"></script>
     <script src="bower_components/gaia-list/gaia-list.js"></script>
+    <script src="bower_components/gaia-button/gaia-button.js"></script>
+    <script src="bower_components/gaia-color-picker/gaia-color-picker.js"></script>
 
     <link rel="localization" href="data/{locale}.properties" />
     <script type="text/javascript" src="js/libs/l10n.js" defer></script>
@@ -55,5 +57,12 @@
       <div id="edit-list">
       </div>
     </section>
+    <div id="edit-color">
+      <gaia-color-picker value="#fff"></gaia-color-picker>
+      <div>
+        <gaia-button class="cancel">Cancel</gaia-button>
+        <gaia-button class="save">Save</gaia-button>
+      </div>
+    </div>
   </body>
 </html>
