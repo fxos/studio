@@ -68,7 +68,7 @@
       sections: {
         'Basics': {
           '--background': '#0E2B35',
-          '--text-color': 'white',
+          '--text-color': '#ffffff',
           '--highlight-color': '#889426',
           '--link-color': '#889426',
           '--border-color': '#C15082',
