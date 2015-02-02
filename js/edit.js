@@ -34,6 +34,7 @@
         var value = currentSection[currentKey];
         this.iframe.contentDocument.body.style.setProperty(currentKey, value);
         this.editColor.classList.remove('editing');
+        currentKey = null;
       };
 
       this.save.onclick = () => {
@@ -49,6 +50,7 @@
 
         Storage.updateTheme(currentTheme).then(() => {
           this.editColor.classList.remove('editing');
+          currentKey = null;
         }).catch(function(error) {
           console.log(error);
         });

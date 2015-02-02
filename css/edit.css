@@ -25,7 +25,7 @@
   z-index: 10;
 
   transform: translateY(100%);
-  transition: transform 0.3s ease-in;
+  transition: transform 0.3s ease;
 }
 
 #edit-color.editing {
@@ -33,23 +33,22 @@
 }
 
 #edit-color gaia-color-picker {
-  flex-grow: 1;
+  flex: 1 0 70%;
   width: 70%;
-  height: 70%;
   margin: auto;
 }
 
 #edit-color > div {
   display: flex;
   flex-direction: row;
-  flex-grow: 0;
+  flex-wrap: no-wrap;
   align-content: center;
+  flex: 0 0 60px;
 }
 
 #edit-color > div gaia-button {
-  flex-grow: 1;
-  width: 40%;
-  margin: 2% !important;
+  flex: 1 0 40%;
+  margin: 5px !important;
   min-width: 30% !important;
 }
 
