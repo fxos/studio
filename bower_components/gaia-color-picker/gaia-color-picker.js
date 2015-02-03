@@ -153,7 +153,10 @@
 
   const TEMPLATE = `
 <style>
-* { box-sizing: border-box; }
+* {
+  box-sizing: border-box;
+  -moz-user-select: none;
+}
 
 #container {
   display: block;
@@ -162,7 +165,7 @@
   height: 100%;
 }
 
-canvas {
+#canvas {
   position: absolute;
   left: 0;
   top: 0;
@@ -173,65 +176,45 @@ canvas {
 .mark {
   display: block;
   position: absolute;
-  border: solid white 4px;
+  border: solid white 2px;
   border-radius: 50%;
   width: 40px;
   height: 40px;
-  margin-left: -20px;
-  margin-top: -20px;
-}
-
-.mark:before {
-  box-sizing: border-box;
-  display: block;
-  position: relative;
-  border: solid black 1px;
-  border-radius: 50%;
-  width: 40px;
-  height: 40px;
-  content: '';
-  margin-left: -4px;
-  margin-top: -4px;
+  transform: translate(-50%, -50%);
 }
 
 #popup {
   display: none;
   position: absolute;
-  width: 75px;
-  height: 75px;
-  border: solid white 6px;
+  width: 65px;
+  height: 65px;
+  border: solid white 3px;
   border-radius: 50%;
-  border-bottom-right-radius: 5px;
-  transform: translateY(-150%) translateX(-50%) rotate(45deg);
-  box-shadow: 6px 2px 4px black;
+  border-bottom-right-radius: 3px;
+  transform: translate(-50%, -150%) rotate(45deg);
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, .6);
+  background-color: white;
 }
 
-#popup:before {
-  box-sizing: border-box;
-  display: block;
-  border: solid black 1px;
+.preview {
+  width: 100%;
+  height: 100%;
   border-radius: 50%;
-  border-bottom-right-radius: 5px;
-  width: 75px;
-  height: 75px;
-  margin-left: -6px;
-  margin-top: -6px;
-  content: '';
+  border: solid #bbb 1px;
 }
 
 </style>
 <div id="container">
-  <canvas id="hues"></canvas>
-  <canvas id="values"></canvas>
-  <div class="mark" id="huemark"></div>
-  <div class="mark" id="valuemark"></div>
-  <div id="popup"></div>
+  <canvas id="canvas"></canvas>
+  <div class="mark" id="huemark"><div class="preview"></div></div>
+  <div class="mark" id="valuemark"><div class="preview"></div></div>
+  <div id="popup"><div class="preview" id="swatch"></div></div>
 </div>
 `;
 
   const R0 = 0.10;  // The inner radius of the hue/saturation ring
   const R1 = 0.70;  // The outer radius of the hue/saturation ring
-  const R2 = 0.97;  // The outer radius of the value ring
+  const R2 = 0.98;  // The outer radius of the value ring
   const DEGREES = 180/Math.PI;  // Convert radians to degrees
   const RADIANS = Math.PI/180;  // Convert degrees to radians
   const PI = Math.PI;
@@ -253,11 +236,14 @@ canvas {
     this.shadow.appendChild(ColorPickerImpl.template.content.cloneNode(true));
 
     // Get references to the elements we'll need to manipulate
-    this.huecanvas = this.shadow.getElementById('hues');
-    this.valcanvas = this.shadow.getElementById('values');
+    this.canvas = this.shadow.getElementById('canvas');
     this.huemark = this.shadow.getElementById('huemark');
     this.valuemark = this.shadow.getElementById('valuemark');
     this.popup = this.shadow.getElementById('popup');
+    this.swatch = this.shadow.getElementById('swatch');
+
+    // And create the offscreen canvas element that we use for drawing
+    this.offscreen = document.createElement('canvas');
 
     // Start off pure white
     this.h = 0;
@@ -275,10 +261,11 @@ canvas {
     }
 
     // Register event handlers for user interaction
-    this.shadow.addEventListener('mousedown', this);
     this.shadow.addEventListener('touchstart', this);
     this.shadow.addEventListener('touchmove', this);
     this.shadow.addEventListener('touchend', this);
+    this.shadow.addEventListener('mousedown', this);
+    this.mouseEventHandlerRegistered = true;
 
     // If we're already in the document, do the rest now
     if (this.element.parentNode) {
@@ -296,10 +283,10 @@ canvas {
 
   ColorPickerImpl.prototype.detach = function() {
     this.attached = false;
-    this.huecanvas.width = 0;
-    this.valcanvas.width = 0;
-    this.huecontext = null;
-    this.valuecontext = null;
+    this.canvas.width = 0;
+    this.offscreen.width = 0;
+    this.context = null;
+    this.offctx = null;
   };
 
   ColorPickerImpl.prototype.resize = function() {
@@ -344,12 +331,24 @@ canvas {
     this.dpr = window.devicePixelRatio;
     this.width = this.element.clientWidth * this.dpr;
     this.height = this.element.clientHeight * this.dpr;
-    this.cx = this.width / 2;                 // center of the circle
-    this.cy = this.height / 2;
-    this.radius = Math.min(this.cx, this.cy);
+
+    // Canvas dimension in device pixels: width and height are the same
+    this.canvasSize = Math.min(this.width, this.height);
+    this.radius = this.canvasSize / 2;
     this.r0 = Math.round(R0 * this.radius);   // inner radius of hue ring
     this.r1 = Math.round(R1 * this.radius);   // outer radius of hue ring
     this.r2 = Math.round(R2 * this.radius);   // outer radius of value ring
+
+    // The center of the square canvas
+    this.cx = this.radius;
+    this.cy = this.radius;
+
+    // Canvas screen size in CSS pixels
+    this.canvasScreenSize = this.canvasSize / this.dpr;
+
+    // Canvas screen position in CSS pixels
+    this.canvasLeft = (this.element.clientWidth - this.canvasScreenSize) / 2;
+    this.canvasTop = (this.element.clientHeight - this.canvasScreenSize) / 2;
 
     // If we are not in the document yet, or have 0 size, there is nothing
     // to do here.
@@ -357,21 +356,22 @@ canvas {
       return;
     }
 
-    // Set the canvas dimensions
-    // XXX: note that it would be more efficient to force the canvases to
-    // be square.  But then the layout would be tricker
-    this.huecanvas.width = this.width;
-    this.huecanvas.height = this.height;
-    this.valcanvas.width = this.width;
-    this.valcanvas.height = this.height;
+    // Set the onscreen and offscreen canvas dimensions
+    this.canvas.width = this.canvas.height = this.canvasSize;
+    this.offscreen.width = this.offscreen.height = this.canvasSize;
 
-    // Get the canvas contexts
-    this.huectx = this.huecanvas.getContext('2d', {alpha: false});
-    this.valctx = this.valcanvas.getContext('2d');
+    // Set the onscreen canvas size and position.
+    this.canvas.style.left = this.canvasLeft + 'px';
+    this.canvas.style.top = this.canvasTop + 'px';
+    this.canvas.style.width = this.canvasScreenSize + 'px';
+    this.canvas.style.height = this.canvasScreenSize + 'px';
 
-    // Do the pre-drawing
-    this.drawHueSaturationPlane();
-    this.drawValueGradient();
+    // Get the canvas contexts.
+    this.context = this.canvas.getContext('2d', { alpha: false });
+    this.offctx = this.offscreen.getContext('2d');
+
+    // Do the pre-drawing into the offscreen canvas
+    this.predraw();
 
     // And do the regular drawing by calling updateState() to force a redraw
     // We do not generate a change event in this case
@@ -379,7 +379,7 @@ canvas {
   };
 
   ColorPickerImpl.prototype.handleEvent = function(e) {
-    var box = this.element.getBoundingClientRect();
+    var box = this.canvas.getBoundingClientRect();
     var x, y, hit;
 
     // Get the mouse or touch coordinates from the event, convert to
@@ -389,6 +389,12 @@ canvas {
       y = (e.clientY - box.top) * this.dpr;
     }
     else if (e instanceof TouchEvent) {
+      // if we ever get a touch event stop listening for mouse events
+      // we never want to receive both kinds.
+      if (this.mouseEventHandlerRegistered) {
+        this.shadow.removeEventListener('mousedown', this);
+        this.mouseEventHandlerRegistered = false;
+      }
       var touch = e.changedTouches[0];
       x = (touch.clientX - box.left) * this.dpr;
       y = (touch.clientY - box.top) * this.dpr;
@@ -400,28 +406,30 @@ canvas {
         window.addEventListener('mouseup', this, true);
       }
 
-      hit = this.hit(x, y);
+      hit = this.hittest(x, y);
       if (hit === 'hue') {
-        this.changeHueSaturation(x, y);
+        this.hitHueSaturation(x, y);
         this.dragging = 'hue';
-        this.showPopup(x, y);
       }
       else if (hit === 'value') {
-        this.changeValue(x, y);
+        this.hitValue(x, y);
         this.dragging = 'value';
-        this.showPopup(x, y);
+      }
+      if (this.dragging) {
+        this.movePopup();
+        this.showPopup();
       }
     }
     else if (this.dragging &&
              (e.type === 'touchmove' || e.type === 'mousemove'))
     {
-      hit = this.hit(x, y);
+      hit = this.hittest(x, y);
       if (hit === this.dragging) {
         if (hit === 'hue') {
-          this.changeHueSaturation(x, y);
+          this.hitHueSaturation(x, y);
         }
         else if (hit === 'value') {
-          this.changeValue(x, y);
+          this.hitValue(x, y);
         }
       }
     }
@@ -460,10 +468,9 @@ canvas {
                                                    notify = true,
                                                    force = false)
   {
-    var hueChange = force || (h !== this.h) || (s !== this.s);
-    var valueChange = force || (v !== this.v);
+    var changed = force || (h !== this.h) || (s !== this.s) || (v !== this.v);
 
-    if (!hueChange && !valueChange) {
+    if (!changed) {
       return;
     }
 
@@ -474,112 +481,44 @@ canvas {
     this.hexColorString = rgb2hex(this.r, this.g, this.b);
 
     if (this.attached) {
-      if (hueChange) {
-        this.hueChanged = true;
-      }
-      if (valueChange) {
-        this.valueChanged = true;
-      }
-
       if (!this.redrawRequested) {
-        this.redrawRequested = requestAnimationFrame(function() {
-          this.setMarkColor();
-
-          if (this.hueChanged) {
-            this.updateHue();
-          }
-
-          if (this.valueChanged) {
-            this.updateValue();
-          }
-
+        this.redrawRequested = requestAnimationFrame(function(t) {
           this.redrawRequested = null;
-          this.hueChanged = false;
-          this.valueChanged = false;
+          this.draw();
+          this.setMarkColor();
+          this.moveHueMark();
+          this.moveValueMark();
+          this.movePopup();
 
-          // Don't send change events out any faster than 60 times a second
+          // Don't send change events out any faster than once per frame
           // even if touch events are coming in faster than that.
           if (notify) {
             this.element.dispatchEvent(new Event('change'));
           }
-
         }.bind(this));
       }
     }
   };
 
-  // Draw the value=1 plane of the HSV color cylinder into the hue canvas
-  ColorPickerImpl.prototype.drawHueSaturationPlane = function() {
+  // Draw the unchanging parts of the color wheel into the offscreen canvas
+  // The center of the wheel is the value=1 plane of the HSV color cylinder.
+  // Outside of this center wheel is a gradient of transparent black colors.
+  // Note that we only have to call predraw when the size of the canvas changes.
+  ColorPickerImpl.prototype.predraw = function() {
     var r0 = this.r0;
-    var r1 = this.r1;
-    var width = 2 * r1;
-    var height = 2 * r1;
-
-    // Precompute this value to make the inner loop as fast as possible
-    var conversion = 1 / (r1 - r0);
-
-    var imagedata = this.huectx.getImageData(this.cx - r1,
-                                             this.cy - r1,
-                                             width, height);
-    var pixels = imagedata.data;
-
-    for(var y = 0; y < height; y++) {
-      var dy = y - r1;
-
-      for(var x = 0; x < width; x++) {
-        var dx = x - r1;
-        var distance = Math.sqrt(dx*dx + dy*dy);
-
-        // if this pixel is outside r1, do nothing
-        if (distance >  r1) {
-          continue;
-        }
-
-        var index = (y * width + x) * 4;
-
-        // If the pixel is inside r0, make it pure white
-        if (distance < r0) {
-          pixels[index] = 255;
-          pixels[index+1] = 255;
-          pixels[index+2] = 255;
-          pixels[index+3] = 255;
-        }
-        else {
-          // Convert dx, dy to polar (hue, saturation)
-          var hue = Math.atan2(-dy, dx) * DEGREES;
-          if (hue < 0) {
-            hue += 360;
-          }
-          var saturation = (distance - r0) * conversion;
-
-          // Convert that color to rgb
-          var rgb = hsv2rgb(hue, saturation, 1.0);
-          pixels[index] = rgb[0];
-          pixels[index + 1] = rgb[1];
-          pixels[index + 2] = rgb[2];
-          pixels[index + 3] = 255; // Opaque
-        }
-      }
-    }
-
-    this.huectx.putImageData(imagedata, this.cx - r1, this.cy - r1);
-  };
-
-  // Draw a gradient of transparent black colors into the value context
-  // We do this by seting pixels directly in an ImageData so that we can
-  // avoid thin lines and moire patterns that appear when we try to fill
-  // individual wedges of color
-  ColorPickerImpl.prototype.drawValueGradient = function() {
     var r1 = this.r1;
     var r2 = this.r2;
     var width = 2 * r2;
     var height = 2 * r2;
+    var conversion = 1 / (r1 - r0);  // Precompute for speed
 
-    var imagedata = this.valctx.getImageData(this.cx - r2,
+    // Get the rectangle of the canvas inside r2
+    var imagedata = this.offctx.getImageData(this.cx - r2,
                                              this.cy - r2,
                                              width, height);
-    var pixels = imagedata.data;
 
+    // And loop through all of the pixels in the rectangle
+    var pixels = imagedata.data;
     for(var y = 0; y < height; y++) {
       var dy = y - r2;
       var dy2 = dy * dy;
@@ -588,7 +527,7 @@ canvas {
         var dx = x - r2;
         var distance = Math.sqrt(dx*dx + dy2);
 
-        // If this pixel is outside r2 continue.
+        // If this pixel is outside skip to the next one
         if (distance >  r2) {
           if (dx > 0) { // If we're on the right, we're done with this line
             break;
@@ -605,72 +544,62 @@ canvas {
           }
         }
 
-        // If we've moved inside the ring skip immediately to the next part
-        if (distance < r1) {  // if inside the ring
-          if (dx < 0) {       // and on the left side
-            x = width - x;    // skip to the matching right side
-          }
-          continue;
-        }
-
-        // figure out the angle to (dx,dy) and convert to our value
-        var angle = Math.atan2(dy, -dx) + HALFPI;
-        if (angle < 0) {
-          angle += TWOPI;
-        }
-        var value = angle/TWOPI;
-        var opacity = Math.round((1 - value) * 255);
-
         var index = (y * width + x) * 4;
-        pixels[index] = 0;
-        pixels[index + 1] = 0;
-        pixels[index + 2] = 0;
-        pixels[index + 3] = opacity;
+
+        if (distance > r1) {
+          // If we are between r1 and r2, set the pixel to the appropriate
+          // transparent color to create a gradient for the value ring.
+          // figure out the angle to (dx,dy) and convert to our value
+          var angle = Math.atan2(dy, -dx) + HALFPI;
+          if (angle < 0) {
+            angle += TWOPI;
+          }
+          var value = angle/TWOPI;
+          var opacity = Math.round((1 - value) * 255);
+
+          pixels[index] = 0;
+          pixels[index + 1] = 0;
+          pixels[index + 2] = 0;
+          pixels[index + 3] = opacity;
+        }
+        else {
+          // If we are inside r1, set the pixel to the appropriate
+          // hue/saturation.
+
+          // If the pixel is inside r0, make it pure white
+          if (distance < r0) {
+            pixels[index] = 255;
+            pixels[index+1] = 255;
+            pixels[index+2] = 255;
+            pixels[index+3] = 255;
+          }
+          else {
+            // Convert dx, dy to polar (hue, saturation)
+            var hue = Math.atan2(-dy, dx) * DEGREES;
+            if (hue < 0) {
+              hue += 360;
+            }
+            var saturation = (distance - r0) * conversion;
+
+            // Convert that color to rgb
+            var rgb = hsv2rgb(hue, saturation, 1.0);
+            pixels[index] = rgb[0];
+            pixels[index + 1] = rgb[1];
+            pixels[index + 2] = rgb[2];
+            pixels[index + 3] = 255; // Opaque
+          }
+        }
       }
     }
 
-    this.valctx.putImageData(imagedata, this.cx - r2, this.cy - r2);
-
-    // Draw an opaque gradient ring between the hues and values
-    var radiansPerSegment = TWOPI / 256;
-    var startAngle;
-    var endAngle = 3 * HALFPI;
-    // The inner half of this line will be overwritten by the solid
-    // transparent circle we draw, so we draw it twice as wide as we need
-    this.valctx.lineWidth = 3 * this.dpr;
-    this.valctx.lineCap = 'square';
-
-    for(var level = 255; level >= 0; level--) {
-      startAngle = endAngle;
-      endAngle = startAngle - radiansPerSegment;
-      // And now draw another segment in a contrasting color to
-      // separate the values from the hues. Note that these are
-      // opaque colors and are all shades of gray.
-      this.valctx.beginPath();
-      this.valctx.arc(this.cx, this.cy, this.r1, startAngle, endAngle, true);
-      this.valctx.strokeStyle = rgb2hex(level, level, level);
-      if (level === 0) {
-        this.valctx.lineCap = 'butt';
-      }
-      this.valctx.stroke();
-    }
-
-    // Finally draw an opaque black border around the entire circle. This is
-    // needed because the solid ring of color we draw on the hue canvas is
-    // antialiased, and the individual pixels we draw on the value canvas
-    // are jaggy, so we end up with a tiny fringe of partially lit pixels
-    // showing at the edge.
-    this.valctx.beginPath();
-    this.valctx.arc(this.cx, this.cy, this.r2, 0, TWOPI);
-    this.valctx.strokeStyle = '#000';
-    this.valctx.lineWidth = 2 * this.dpr;
-    this.valctx.stroke();
+    // Copy the pixels back into the offscreen canvas for use by this.draw()
+    this.offctx.putImageData(imagedata, this.cx - r2, this.cy - r2);
   };
 
   // Return 'hue' if (x, y) is in the hue/saturation disk.
   // Return 'value' if (x, y) is in the value ring.
   // Otherwise return null.
-  ColorPickerImpl.prototype.hit = function(x, y) {
+  ColorPickerImpl.prototype.hittest = function(x, y) {
     var dx = x - this.cy;
     var dy = y - this.cy;
     var d = Math.sqrt(dx * dx + dy * dy);
@@ -683,7 +612,7 @@ canvas {
     return null;
   };
 
-  ColorPickerImpl.prototype.changeHueSaturation = function(x, y) {
+  ColorPickerImpl.prototype.hitHueSaturation = function(x, y) {
     var dx = x - this.cx;
     var dy = y - this.cy;
     var d = Math.sqrt(dx * dx + dy * dy);
@@ -707,7 +636,7 @@ canvas {
     this.updateState(hue, saturation, this.v);
   };
 
-  ColorPickerImpl.prototype.changeValue = function(x, y) {
+  ColorPickerImpl.prototype.hitValue = function(x, y) {
     var dx = x - this.cx;
     var dy = y - this.cy;
     var angle = Math.atan2(-dy, dx) - HALFPI;
@@ -718,39 +647,55 @@ canvas {
     this.updateState(this.h, this.s, value);
   };
 
-  ColorPickerImpl.prototype.updateValue = function() {
+  ColorPickerImpl.prototype.draw = function() {
+    var opacity = 1 - this.v;
+    var gray = Math.round(opacity * 255);
+
+    // Fill the outer value ring with the current hue and saturation
+    // at value = 1.
+    this.context.beginPath();
+    this.context.arc(this.cx, this.cy, this.r2, 0, TWOPI);
+    this.context.fillStyle = hsv2hex(this.h, this.s, 1);
+    this.context.fill();
+
+    // Overlap it with the offscreen canvas
+    this.context.drawImage(this.offscreen, 0, 0);
+
+    // Now draw over the hue/saturation ring with a translucent color
+    // to reduce the value to the appropriate level.
+    this.context.beginPath();
+    this.context.arc(this.cx, this.cy, this.r1, 0, TWOPI);
+    this.context.fillStyle = 'rgba(0,0,0,' + opacity + ')';
+    this.context.fill();
+
+    // Set the border width
+    this.context.lineWidth = 1 * this.dpr;
+
+    // Draw an inner border with a color that contrasts with the current value
+    this.context.strokeStyle = rgb2hex(gray, gray, gray);
+    this.context.stroke();
+
+    // Draw an outer border
+    this.context.beginPath();
+    this.context.arc(this.cx, this.cy, this.r2, 0, TWOPI);
+    this.context.strokeStyle = '#000';
+    this.context.stroke();
+  };
+
+  ColorPickerImpl.prototype.moveValueMark = function() {
     // Move the marker that indicates the currently selected value
     var angle = this.v * TWOPI + HALFPI;
 
     var r = (this.r1 + this.r2)/2;
     var x = this.cx + r * Math.cos(angle);
     var y = this.cy - r * Math.sin(angle);
-    this.valuemark.style.left = (x / this.dpr) + 'px';
-    this.valuemark.style.top = (y / this.dpr) + 'px';
-    this.popup.style.left = (x / this.dpr) + 'px';
-    this.popup.style.top = (y / this.dpr) + 'px';
-
-    // Draw a transparent black circle in the value canvas to alter the
-    // apparent values of the colors in the hue canvas. We need to do a
-    // copy operation so that the colors already in the canvas do not get
-    // combined with the pixels we're drawing.
-    //
-    // XXX This code works correctly on the desktop but not in Firefox for
-    // Android or on FirefoxOS, so until bug 1126055 is resolved, we're
-    // just not going to alter the value of the central color disk.
-    //
-    // var opacity = 1 - this.v;
-    // this.valctx.save();
-    // this.valctx.beginPath();
-    // this.valctx.arc(this.cx, this.cy, this.r1, 0, TWOPI, false);
-    // this.valctx.clip();
-    // this.valctx.globalCompositeOperation = 'copy';
-    // this.valctx.fillStyle = 'rgba(0,0,0,' + opacity + ')';
-    // this.valctx.fill();
-    // this.valctx.restore();
+    x = this.canvasLeft + x / this.dpr;
+    y = this.canvasTop + y / this.dpr;
+    this.valuemark.style.left = x + 'px';
+    this.valuemark.style.top = y + 'px';
   };
 
-  ColorPickerImpl.prototype.updateHue = function() {
+  ColorPickerImpl.prototype.moveHueMark = function() {
     // Compute the position of the hue marker and move it
     var x = this.cx, y = this.cy;
 
@@ -761,38 +706,38 @@ canvas {
       x += d * Math.cos(angle);
       y -= d * Math.sin(angle);
     }
-    this.huemark.style.left = (x / this.dpr) + 'px';
-    this.huemark.style.top = (y / this.dpr) + 'px';
-    this.popup.style.left = (x / this.dpr) + 'px';
-    this.popup.style.top = (y / this.dpr) + 'px';
 
-    // Draw a solid ring of the current hue/saturation at value=1 in the
-    // hue canvas so that a gradient of the color appears through the 
-    // pre-drawn gradient in the value canvas.
-    this.huectx.beginPath();
-    this.huectx.arc(this.cx, this.cy, this.r1, 0, TWOPI, true);
-    this.huectx.arc(this.cx, this.cy, this.r2, 0, TWOPI, false);
-    this.huectx.fillStyle = hsv2hex(this.h, this.s, 1);
-    this.huectx.fill();
+    x = this.canvasLeft + x / this.dpr;
+    y = this.canvasTop + y / this.dpr;
+
+    this.huemark.style.left = x + 'px';
+    this.huemark.style.top = y + 'px';
+  };
+
+  ColorPickerImpl.prototype.movePopup = function() {
+    if (this.dragging == 'hue') {
+      this.popup.style.left = this.huemark.style.left;
+      this.popup.style.top = this.huemark.style.top;
+    }
+    if (this.dragging == 'value') {
+      this.popup.style.left = this.valuemark.style.left;
+      this.popup.style.top = this.valuemark.style.top;
+    }
   };
 
   ColorPickerImpl.prototype.setMarkColor = function() {
     this.huemark.style.backgroundColor = this.hexColorString;
     this.valuemark.style.backgroundColor = this.hexColorString;
-    this.popup.style.backgroundColor = this.hexColorString;
+    this.swatch.style.backgroundColor = this.hexColorString;
   };
 
-  ColorPickerImpl.prototype.showPopup = function(x, y) {
-    // Set the initial position of the popup and show it
-    this.popup.style.left = x / this.dpr + 'px';
-    this.popup.style.top = y / this.dpr + 'px';
+  ColorPickerImpl.prototype.showPopup = function() {
     this.popup.style.display = 'block';
   };
 
   ColorPickerImpl.prototype.hidePopup = function() {
     this.popup.style.display = 'none';
   };
-
 
   /*
    * Color conversion utilities
