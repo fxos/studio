@@ -13,8 +13,6 @@
     editColor: document.querySelector('#edit-color'),
     picker: document.querySelector('#edit-color gaia-color-picker'),
     iframe: document.querySelector('#edit iframe'),
-    cancel: document.querySelector('#edit-color .cancel'),
-    save: document.querySelector('#edit-color .save'),
 
     prepareForDisplay: function(params) {
       currentTheme = params.theme;
@@ -28,32 +26,6 @@
         }
         var value = this.picker.value;
         this.iframe.contentDocument.body.style.setProperty(currentKey, value);
-      };
-
-      this.cancel.onclick = () => {
-        var value = currentSection[currentKey];
-        this.iframe.contentDocument.body.style.setProperty(currentKey, value);
-        this.editColor.classList.remove('editing');
-        currentKey = null;
-      };
-
-      this.save.onclick = () => {
-        if (!currentKey) {
-          return;
-        }
-
-        var value = this.picker.value;
-        currentSection[currentKey] = value;
-
-        var elem = this.list.querySelector('[data-id=' + currentKey + ']')
-        elem.textContent = value;
-
-        Storage.updateTheme(currentTheme).then(() => {
-          this.editColor.classList.remove('editing');
-          currentKey = null;
-        }).catch(function(error) {
-          console.log(error);
-        });
       };
 
       var currentList = this.list.querySelector('gaia-list');
@@ -122,6 +94,42 @@
     }
 
     Edit.pick(target.dataset.key);
+  });
+
+  Edit.editColor.addEventListener('click', function(evt) {
+    var target = evt.target;
+
+    if (target.classList.contains('save')) {
+      if (!currentKey) {
+        return;
+      }
+
+      var value = Edit.picker.value;
+      currentSection[currentKey] = value;
+
+      var elem = Edit.list.querySelector('[data-id=' + currentKey + ']')
+      elem.textContent = value;
+
+      Storage.updateTheme(currentTheme).then(() => {
+        Edit.editColor.classList.remove('editing');
+        currentKey = null;
+      }).catch(function(error) {
+        console.log(error);
+      });
+      return;
+    }
+
+    if (!target.classList.contains('cancel')) {
+      return;
+    }
+
+    if (currentKey) {
+      var value = currentSection[currentKey];
+      Edit.iframe.contentDocument.body.style.setProperty(currentKey, value);
+    }
+
+    Edit.editColor.classList.remove('editing');
+    currentKey = null;
   });
 
   exports.Edit = Edit;

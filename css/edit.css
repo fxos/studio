@@ -10,7 +10,7 @@
   position: absolute;
   bottom: 0;
   width: 100%;
-  height: calc(50% + 6px);
+  height: 100%;
 
   display: flex;
   flex-direction: column;
@@ -20,12 +20,26 @@
   margin: 0;
   padding: 0;
 
-  background: var(--background);
   overflow: hidden;
   z-index: 10;
 
   transform: translateY(100%);
   transition: transform 0.3s ease;
+}
+
+#edit-color #catcher {
+  flex: 1 0 calc(50% - 6px);
+  background: transparent;
+}
+
+#edit-color #controls {
+  display: flex;
+  flex-direction: column;
+  flex-wrap: no-wrap;
+  align-content: space-around;
+
+  flex: 1 0 50%;
+  background: var(--background);
 }
 
 #edit-color.editing {
@@ -38,7 +52,7 @@
   margin: auto;
 }
 
-#edit-color > div {
+#edit-color #controls > div {
   display: flex;
   flex-direction: row;
   flex-wrap: no-wrap;
@@ -46,7 +60,7 @@
   flex: 0 0 60px;
 }
 
-#edit-color > div gaia-button {
+#edit-color #controls > div gaia-button {
   flex: 1 0 40%;
   margin: 5px !important;
   min-width: 30% !important;
