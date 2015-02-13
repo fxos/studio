@@ -47,23 +47,26 @@
 }
 
 #edit-color gaia-color-picker {
-  flex: 1 0 70%;
+  flex: 1 1 70%;
   width: 70%;
   margin: auto;
 }
 
-#edit-color #controls > div {
+.buttons-bar {
   display: flex;
   flex-direction: row;
   flex-wrap: no-wrap;
   align-content: center;
-  flex: 0 0 60px;
 }
 
-#edit-color #controls > div gaia-button {
+.buttons-bar > gaia-button {
   flex: 1 0 40%;
   margin: 5px !important;
   min-width: 30% !important;
+}
+
+#edit-color .buttons-bar {
+  flex: 0 0 60px;
 }
 
 #edit gaia-list li * {

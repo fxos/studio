@@ -1,3 +1,12 @@
+/* global
+  AutoTheme,
+  Edit,
+  Generation,
+  Main,
+  Navigation,
+  Storage
+*/
+
 (function(exports) {
   'use strict';
 
@@ -7,24 +16,35 @@
     panel: document.getElementById('details'),
     header: document.querySelector('#details gaia-header'),
     title: document.querySelector('#details gaia-header h1'),
+    list: document.querySelector('#details gaia-list'),
+    autotheme: document.querySelector('#details .autotheme-palette'),
 
     prepareForDisplay: function(params) {
-      var currentList = this.panel.querySelector('gaia-list');
-      if (currentList) {
-        this.panel.removeChild(currentList);
-      }
+      Array.from(this.list.children).forEach((item) => {
+        if (!item.classList.contains('static')) {
+          item.remove();
+        }
+      });
 
       Storage.fetchTheme(params.id).then((theme) => {
         currentTheme = theme;
         this.title.textContent = theme.title;
         this.header.setAttr('action', 'back');
 
-        var list = document.createElement('gaia-list')
+        if (theme.autotheme) {
+          AutoTheme.fromStorable(theme.autotheme);
+        }
+
+        AutoTheme.on('palette', () => {
+          currentTheme.autotheme = AutoTheme.asStorable();
+          Storage.updateTheme(currentTheme);
+        });
+
         Object.keys(theme.groups).forEach(function(group) {
           var sectionTitle = document.createElement('span');
           sectionTitle.classList.add('group');
           sectionTitle.textContent = group;
-          list.appendChild(sectionTitle);
+          this.list.appendChild(sectionTitle);
 
           Object.keys(theme.groups[group]).forEach(function(key, index) {
             var link = document.createElement('a');
@@ -43,9 +63,9 @@
             forward.dataset.icon = 'forward-light';
             link.appendChild(forward);
 
-            list.appendChild(link);
-          });
-        });
+            this.list.appendChild(link);
+          }, this);
+        }, this);
 
         var actions = [
           {
@@ -72,15 +92,19 @@
           var title = document.createElement('h3');
           title.textContent = params.title;
           link.appendChild(title);
-          list.appendChild(link);
-        });
-
-        this.panel.appendChild(list);
+          this.list.appendChild(link);
+        }, this);
       }).catch(function(error) {
         console.log(error);
       });
 
+      AutoTheme.on('palette', this.onPalette);
+
       return this.panel;
+    },
+
+    onPalette() {
+      AutoTheme.showPalette(Details.autotheme);
     },
 
     installTheme: function() {
@@ -108,7 +132,7 @@
       target.classList.add('disabled');
       Details.installTheme().then(() => {
         target.classList.remove('disabled');
-      }).catch(console.error);
+      }).catch(console.error.bind(console));
       return;
     }
 
@@ -150,7 +174,10 @@
       return;
     }
 
+    AutoTheme.off('palette', Details.onPalette);
+    AutoTheme.clean();
     Navigation.pop();
+    Navigation.once('post-navigate', Details.onPalette);
   });
 
   exports.Details = Details;

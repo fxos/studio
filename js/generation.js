@@ -1,8 +1,28 @@
+/*global
+  MimeMapper
+ */
+
 (function(exports) {
   'use strict';
 
+  function proposeDownload(blob) {
+    console.log('proposeDownload');
+    var url = window.URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'app.zip';
+    a.hidden = true;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.URL.revokeObjectURL(blob);
+  }
+
   function importBlob(blob) {
     console.log('importBlob');
+    if (!navigator.getDeviceStorage) {
+      return Promise.reject(new Error('getDeviceStorage is unavailable.'));
+    }
     // Save the blob to a file because we don't support importing memory blobs.
     var sdcard = navigator.getDeviceStorage('sdcard');
     return new Promise((resolve, reject) => {
@@ -76,24 +96,56 @@
       origin: 'app://theme' + appId + '.gaiamobile.org'
     };
 
-    return new Promise((resolve, reject) => {
-      inner.init().then(() => {
-        function addManifest() {
-          return inner.addResource('manifest.webapp', JSON.stringify(manifest));
+    return inner.init().then(() => {
+      function addManifest() {
+        return inner.addResource('manifest.webapp', JSON.stringify(manifest));
+      }
+
+      function addCSS() {
+        return inner.addResource('shared/elements/gaia-theme/gaia-theme.css', userStyle(theme));
+      }
+
+      function addWallpaper(blob) {
+        var type = MimeMapper.guessExtensionFromType(blob.type);
+        if (!type) {
+          throw new Error('Unrecognized type: ' + blob.type);
         }
 
-        function addCSS() {
-          return inner.addResource('shared/elements/gaia-theme/gaia-theme.css', userStyle(theme));
-        }
+        var wallpaperFile = 'wallpaper.' + type;
+        var wallpaperJSON = JSON.stringify(
+          { homescreen: '/' + wallpaperFile }
+        );
 
-        addManifest().then(addCSS)
-                     .then(inner.asBlob.bind(inner))
-                     .then((blob) => {
-                        app.packageblob = blob;
-                        return app.asBlob().then(importBlob).then(resolve);
-                      })
-                     .catch(reject);
-      });
+        // We can't use Promise.all to add both files because it corrupts the
+        // zip
+        return Promise.resolve()
+          .then(() => inner.addResource('wallpaper.json', wallpaperJSON))
+          .then(() => inner.addResource(wallpaperFile, blob));
+      }
+
+      var zipPromise = addManifest().then(addCSS);
+      var image;
+      if (theme.autotheme) {
+        image = theme.autotheme.image;
+        zipPromise = zipPromise.then(() => addWallpaper(image));
+      }
+
+      return zipPromise.then(inner.asBlob.bind(inner))
+        .then((packageBlob) => {
+          app.packageblob = packageBlob;
+          return app.asBlob();
+        }).then((appBlob) => {
+          return importBlob(appBlob)
+            .then(() => Promise.resolve(image &&
+              navigator.mozSettings.createLock().set({
+                'wallpaper.image': image
+              })
+            ))
+            .catch((e) => {
+              console.error('Error while importing blob', e);
+              proposeDownload(appBlob);
+            });
+        });
    });
   }
 
