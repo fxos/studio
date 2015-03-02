@@ -87,3 +87,7 @@
 
   pointer-events: none;
 }
+
+#edit gaia-header h1 {
+  text-transform: capitalize;
+}
