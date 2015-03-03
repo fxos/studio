@@ -25,7 +25,5 @@
   "installs_allowed_from": [
     "*"
   ],
-  "locales": {
-  },
   "default_locale": "en"
 }
