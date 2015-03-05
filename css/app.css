@@ -20,7 +20,7 @@ gaia-list h3 {
 gaia-list .action {
   text-align: center;
   text-decoration: underline;
-  background: rgba(255, 255, 255, 0.65);
+  background-color: var(--button-background);
 }
 
 gaia-list .action.disabled {
@@ -34,4 +34,22 @@ gaia-list .destructive {
 
 a.navigation *, a.action *, a.edit * {
   pointer-events: none;
+}
+
+gaia-list span.group {
+  text-transform: capitalize;
+  font-size: 0.8em;
+  min-height: auto;
+
+  background: linear-gradient(rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.5)),
+              var(--highlight-color);
+  color: var(--text-color);
+}
+
+gaia-list span.group::before {
+  display: none;
+}
+
+gaia-list a.first::before {
+  display: none;
 }

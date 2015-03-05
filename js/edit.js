@@ -17,7 +17,7 @@
     prepareForDisplay: function(params) {
       currentTheme = params.theme;
 
-      this.title.textContent = params.section;
+      this.title.textContent = params.group + ' / ' + params.section;
       this.header.setAttr('action', 'back');
 
       this.picker.onchange = () => {
@@ -34,7 +34,7 @@
       }
 
       var list = document.createElement('gaia-list')
-      currentSection = currentTheme.sections[params.section];
+      currentSection = currentTheme.groups[params.group][params.section];
 
       this.iframe.src = '/' + params.section + '-preview.html';
       this.iframe.onload = () => {

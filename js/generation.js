@@ -104,8 +104,14 @@
     var str = '';
     roots.forEach(function(root) {
       str += root + ' {\n';
-      Object.keys(theme.sections).forEach(function(sectionKey) {
-        var section = theme.sections[sectionKey];
+      var group;
+      if (root === ':root') {
+        group = 'default';
+      } else {
+        group = root.split('-')[1];
+      }
+      Object.keys(theme.groups[group]).forEach(function(sectionKey) {
+        var section = theme.groups[group][sectionKey];
         Object.keys(section).forEach(function(key) {
           str += key + ': ' + section[key] + ';\n';
         });

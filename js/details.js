@@ -20,20 +20,31 @@
         this.header.setAttr('action', 'back');
 
         var list = document.createElement('gaia-list')
-        Object.keys(theme.sections).forEach(function(key) {
-          var link = document.createElement('a');
-          link.classList.add('navigation');
-          link.dataset.section = key;
+        Object.keys(theme.groups).forEach(function(group) {
+          var sectionTitle = document.createElement('span');
+          sectionTitle.classList.add('group');
+          sectionTitle.textContent = group;
+          list.appendChild(sectionTitle);
 
-          var title = document.createElement('h3');
-          title.textContent = key;
-          link.appendChild(title);
+          Object.keys(theme.groups[group]).forEach(function(key, index) {
+            var link = document.createElement('a');
+            link.classList.add('navigation');
+            link.dataset.group = group;
+            link.dataset.section = key;
+            if (index === 0) {
+              link.classList.add('first');
+            }
 
-          var forward = document.createElement('i');
-          forward.dataset.icon = 'forward-light';
-          link.appendChild(forward);
+            var title = document.createElement('h3');
+            title.textContent = key;
+            link.appendChild(title);
 
-          list.appendChild(link);
+            var forward = document.createElement('i');
+            forward.dataset.icon = 'forward-light';
+            link.appendChild(forward);
+
+            list.appendChild(link);
+          });
         });
 
         var actions = [
@@ -125,9 +136,11 @@
       return;
     }
 
+    var targetGroup = target.dataset.group;
     var targetSection = target.dataset.section;
     Navigation.push(Edit.prepareForDisplay({
       theme: currentTheme,
+      group: targetGroup,
       section: targetSection
     }));
   });
