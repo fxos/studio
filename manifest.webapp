@@ -7,7 +7,8 @@
     "16": "/img/icons/icon16x16.png",
     "48": "/img/icons/icon48x48.png",
     "60": "/img/icons/icon60x60.png",
-    "128": "/img/icons/icon128x128.png"
+    "128": "/img/icons/icon128x128.png",
+    "512": "/img/icons/icon512x512.png"
   },
   "orientation": "default",
   "developer": {
