@@ -375,6 +375,7 @@ var template = `
   color: var(--color-epsilon);
   transition: all 200ms;
   transition-delay: 300ms;
+  border-radius: 0;
 }
 
 /**
@@ -391,6 +392,14 @@ var template = `
 
 .shadow-content button.danger {
   color: var(--color-destructive);
+}
+
+/**
+ * Disabled buttons
+ */
+
+.shadow-content button[disabled] {
+  color: var(--color-zeta);
 }
 
 /** Button Divider Line
@@ -510,13 +519,18 @@ var animations = `
 
 
 // Register and expose the constructor
-module.exports = document.registerElement('gaia-dialog', { prototype: proto });
-module.exports.proto = proto;
+try {
+  module.exports = document.registerElement('gaia-dialog', { prototype: proto });
+  module.exports.proto = proto;
 
-
-module.exports.extend = function() {
-  return mixin(Object.create(proto), extended);
-};
+  module.exports.extend = function() {
+    return mixin(Object.create(proto), extended);
+  };
+} catch (e) {
+  if (e.name !== 'NotSupportedError') {
+    throw e;
+  }
+}
 
 var extended = {
   onCreated: function() {
