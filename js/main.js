@@ -3,7 +3,8 @@
   Defer,
   Details,
   Navigation,
-  Storage
+  Storage,
+  ThemeCreator
 */
 (function(exports) {
   'use strict';
@@ -14,6 +15,7 @@
     title: document.querySelector('#main gaia-header h1'),
     dialog: document.getElementById('new-theme-dialog'),
     dialogInput: document.querySelector('.new-theme-title-input'),
+    dialogConfirm: document.querySelector('#new-theme-dialog .confirm'),
     autotheme: document.querySelector('#new-theme-dialog .autotheme-palette'),
 
     prepareForDisplay: function(params) {
@@ -53,13 +55,17 @@
         console.log(error);
       });
 
+      this.dialogInput.addEventListener('input', () => {
+        this.dialogConfirm.disabled = this.dialogInput.value === '';
+      });
+
       return this.panel;
     },
 
     createTheme: function() {
       this.promptNewTheme().then((theme) => {
         if (!theme.title) {
-          return;
+          throw new Error('No title has been set !');
         }
 
         theme = ThemeCreator.template(theme);
@@ -73,7 +79,7 @@
     },
 
     promptNewTheme() {
-      AutoTheme.on('palette', this.onPalette);
+      window.addEventListener('AutoTheme:palette', this.onPalette);
       this.dialog.open();
       this.createDialogDefer = new Defer();
       return this.createDialogDefer.promise;
@@ -82,7 +88,7 @@
     closeDialog() {
       this.dialog.close();
       this.dialogInput.value = '';
-      AutoTheme.off('palette', this.onPalette);
+      window.removeEventListener('AutoTheme:palette', this.onPalette);
       AutoTheme.clean();
       this.onPalette();
       this.createDialogDefer = null;

@@ -26,7 +26,7 @@
   },
   "activities": {
     "share": {
-      "href": "/index.html#activity-share",
+      "href": "/index.html",
       "filters": {
         "type": ["image/*"],
         "number": {

@@ -1,6 +1,17 @@
-/*global Color, ColorThief, Defer, EventDispatcher, MozActivity */
+/*global
+  Color,
+  ColorThief,
+  Defer,
+  MozActivity
+*/
 
 'use strict';
+
+/**
+ * @exports AutoTheme
+ * @event AutoTheme:palette This is emitted when a new palete has been generated
+ * from an image.
+ */
 
 (function(exports) {
   // is autotheming active
@@ -38,7 +49,7 @@
     return defer.promise;
   }
 
-  var AutoTheme = {
+  var AutoTheme = exports.AutoTheme = {
     get active() {
       return active;
     },
@@ -55,7 +66,7 @@
       switch(e.type) {
         case 'click':
           this.pickImage()
-            .then(this.loadBlob.bind(this))
+            .then(this.getPalette.bind(this))
             .then(this.storePalette.bind(this));
           break;
       }
@@ -63,7 +74,7 @@
 
     /* called from activity */
     load(blob) {
-      return this.loadBlob(blob)
+      return this.getPalette(blob)
         .then(this.storePalette.bind(this));
     },
 
@@ -85,7 +96,7 @@
       return defer.promise;
     },
 
-    loadBlob(blob) {
+    getPalette(blob) {
       function imageFromBlob(blob) {
         var blobUrl = window.URL.createObjectURL(blob);
         return loadImage(blobUrl).then((image) => {
@@ -160,6 +171,11 @@
       this.image = stored.image;
       this.active = true;
       this.emit('palette');
+    },
+
+    emit(name) {
+      var event = new CustomEvent('AutoTheme:' + name);
+      window.dispatchEvent(event);
     }
   };
 
@@ -169,6 +185,4 @@
   Array.from(AutoTheme.elts.commandCancel).forEach(
     elt => elt.addEventListener('click', () => AutoTheme.storePalette(null))
   );
-
-  exports.AutoTheme = EventDispatcher.mixin(AutoTheme, ['palette']);
 })(window);

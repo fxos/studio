@@ -1,14 +1,14 @@
 /* global
   Defer,
-  EventDispatcher,
   Main
- */
+*/
+
 (function(exports) {
   'use strict';
 
   var stack = [Main.prepareForDisplay()];
 
-  var Navigation = {
+  exports.Navigation = {
     waitForTransition() {
       var defer = new Defer();
 
@@ -30,11 +30,13 @@
     },
 
     push: function(panel) {
-      stack[stack.length - 1].classList.add('back');
-      panel.classList.remove('next');
-      stack.push(panel);
+      return Promise.resolve(panel).then((panel) => {
+        stack[stack.length - 1].classList.add('back');
+        panel.classList.remove('next');
+        stack.push(panel);
 
-      this.waitForTransition().then(() => this.emit('post-navigate'));
+        return this.waitForTransition();
+      });
     },
 
     pop: function() {
@@ -42,9 +44,7 @@
       toPop.classList.add('next');
       stack[stack.length - 1].classList.remove('back');
 
-      this.waitForTransition().then(() => this.emit('post-navigate'));
+      return this.waitForTransition();
     }
   };
-
-  exports.Navigation = EventDispatcher.mixin(Navigation, ['post-navigate']);
 })(window);

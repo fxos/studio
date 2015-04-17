@@ -70,6 +70,7 @@
       });
 
       this.list.appendChild(list);
+      this.list.scrollTop = 0;
 
       return this.panel;
     },

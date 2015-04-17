@@ -26,7 +26,9 @@
         }
       });
 
-      Storage.fetchTheme(params.id).then((theme) => {
+      window.addEventListener('AutoTheme:palette', this.onPalette);
+
+      return Storage.fetchTheme(params.id).then((theme) => {
         currentTheme = theme;
         this.title.textContent = theme.title;
         this.header.setAttr('action', 'back');
@@ -34,11 +36,6 @@
         if (theme.autotheme) {
           AutoTheme.fromStorable(theme.autotheme);
         }
-
-        AutoTheme.on('palette', () => {
-          currentTheme.autotheme = AutoTheme.asStorable();
-          Storage.updateTheme(currentTheme);
-        });
 
         Object.keys(theme.groups).forEach(function(group) {
           var sectionTitle = document.createElement('span');
@@ -96,15 +93,14 @@
         }, this);
       }).catch(function(error) {
         console.log(error);
-      });
-
-      AutoTheme.on('palette', this.onPalette);
-
-      return this.panel;
+      }).then(() => this.panel);
     },
 
     onPalette() {
+      /* no "this" available here. */
       AutoTheme.showPalette(Details.autotheme);
+      currentTheme.autotheme = AutoTheme.asStorable();
+      Storage.updateTheme(currentTheme);
     },
 
     installTheme: function() {
@@ -174,10 +170,11 @@
       return;
     }
 
-    AutoTheme.off('palette', Details.onPalette);
-    AutoTheme.clean();
-    Navigation.pop();
-    Navigation.once('post-navigate', Details.onPalette);
+    window.removeEventListener('AutoTheme:palette', Details.onPalette);
+    Navigation.pop().then(() => {
+      AutoTheme.clean();
+      AutoTheme.showPalette(Details.autotheme);
+    });
   });
 
   exports.Details = Details;
