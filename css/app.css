@@ -13,6 +13,12 @@ section {
   overflow: scroll;
 }
 
+menu {
+  display: block;
+  padding: 0;
+  margin: 0;
+}
+
 gaia-list h3 {
   width: calc(100% - 10px);
 }

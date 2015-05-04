@@ -1,3 +1,5 @@
+/*global AutoTheme, Color, Navigation, Storage */
+
 (function(exports) {
   'use strict';
 
@@ -13,35 +15,32 @@
     editColor: document.querySelector('#edit-color'),
     picker: document.querySelector('#edit-color gaia-color-picker'),
     iframe: document.querySelector('#edit iframe'),
+    autotheme: document.querySelector('#edit-color .autotheme-palette'),
 
     prepareForDisplay: function(params) {
       currentTheme = params.theme;
 
       this.title.textContent = params.group + ' / ' + params.section;
       this.header.setAttr('action', 'back');
+      AutoTheme.showPalette(this.autotheme);
 
-      this.picker.onchange = () => {
-        if (!currentKey) {
-          return;
-        }
-        var value = this.picker.value;
-        this.iframe.contentDocument.body.style.setProperty(currentKey, value);
-      };
+      this.picker.addEventListener('change', this.onPickerChange.bind(this));
 
       var currentList = this.list.querySelector('gaia-list');
       if (currentList) {
         this.list.removeChild(currentList);
       }
 
-      var list = document.createElement('gaia-list')
+      var list = document.createElement('gaia-list');
       currentSection = currentTheme.groups[params.group][params.section];
 
-      this.iframe.src = '/' + params.section + '-preview.html';
+      this.iframe.src = params.section + '-preview.html';
       this.iframe.onload = () => {
         Object.keys(currentSection).forEach((key) => {
-          this.iframe.contentDocument.body.style.setProperty(key, currentSection[key]);
+          var body = this.iframe.contentDocument.body;
+          body.style.setProperty(key, currentSection[key]);
         });
-      }
+      };
 
       Object.keys(currentSection).forEach((key) => {
         var link = document.createElement('a');
@@ -58,15 +57,20 @@
 
         link.appendChild(label);
 
-        var value = document.createElement('span');
-        value.textContent = currentSection[key];
-        value.dataset.id = key;
-        link.appendChild(value);
+        var valueElt = document.createElement('div');
+        var value = currentSection[key];
+        valueElt.setAttribute('aria-label', value);
+        valueElt.dataset.id = key;
+        valueElt.className = 'palette-item';
+        valueElt.style.backgroundColor = value;
+
+        link.appendChild(valueElt);
 
         list.appendChild(link);
       });
 
       this.list.appendChild(list);
+      this.list.scrollTop = 0;
 
       return this.panel;
     },
@@ -75,6 +79,15 @@
       currentKey = key;
       this.picker.value = currentSection[key];
       this.editColor.classList.add('editing');
+      this.picker.resize();
+    },
+
+    onPickerChange() {
+      if (!currentKey) {
+        return;
+      }
+      var value = this.picker.value;
+      this.iframe.contentDocument.body.style.setProperty(currentKey, value);
     }
   };
 
@@ -98,17 +111,19 @@
 
   Edit.editColor.addEventListener('click', function(evt) {
     var target = evt.target;
+    var value;
 
     if (target.classList.contains('save')) {
       if (!currentKey) {
         return;
       }
 
-      var value = Edit.picker.value;
+      value = Edit.picker.value;
       currentSection[currentKey] = value;
 
-      var elem = Edit.list.querySelector('[data-id=' + currentKey + ']')
-      elem.textContent = value;
+      var elem = Edit.list.querySelector('[data-id=' + currentKey + ']');
+      elem.setAttribute('aria-label', value);
+      elem.style.backgroundColor = value;
 
       Storage.updateTheme(currentTheme).then(() => {
         Edit.editColor.classList.remove('editing');
@@ -124,12 +139,22 @@
     }
 
     if (currentKey) {
-      var value = currentSection[currentKey];
+      value = currentSection[currentKey];
       Edit.iframe.contentDocument.body.style.setProperty(currentKey, value);
     }
 
     Edit.editColor.classList.remove('editing');
     currentKey = null;
+  });
+
+  Edit.autotheme.addEventListener('click', function(e) {
+    if (!e.target.classList.contains('palette-item')) {
+      return;
+    }
+
+    var color = Color.fromJSONString(e.target.dataset.color);
+    Edit.picker.value = color.toHexString();
+    Edit.onPickerChange();
   });
 
   exports.Edit = Edit;

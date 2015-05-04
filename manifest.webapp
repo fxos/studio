@@ -24,6 +24,19 @@
     "device-storage:sdcard": { "access": "readwrite" },
     "settings": { "access": "readwrite" }
   },
+  "activities": {
+    "share": {
+      "href": "/index.html",
+      "filters": {
+        "type": ["image/*"],
+        "number": {
+          "max": 1 
+        }
+       },
+      "disposition": "window",
+      "returnValue": false
+    }
+  },
   "installs_allowed_from": [
     "*"
   ],

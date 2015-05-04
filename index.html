@@ -8,17 +8,26 @@
     <link rel="stylesheet" href="css/app.css">
     <link rel="stylesheet" href="css/navigation.css">
     <link rel="stylesheet" href="css/edit.css">
+    <link rel="stylesheet" href="css/autotheme.css">
 
+    <script type="text/javascript" src="js/defer.js" defer></script>
+    <script type="text/javascript" src="js/theme_creator.js" defer></script>
     <script type="text/javascript" src="js/storage.js" defer></script>
     <script type="text/javascript" src="js/generation.js" defer></script>
+    <script type="text/javascript" src="js/color.js" defer></script>
 
     <script type="text/javascript" src="js/libs/zip.js" defer></script>
     <script type="text/javascript" src="js/libs/appzip.js" defer></script>
+    <script type="text/javascript" src="js/libs/mime_mapper.js" defer></script>
+
+    <script src="js/ext/color-thief.js" defer></script>
+    <script src="js/autotheme.js" defer></script>
 
     <script type="text/javascript" src="js/main.js" defer></script>
     <script type="text/javascript" src="js/details.js" defer></script>
     <script type="text/javascript" src="js/edit.js" defer></script>
     <script type="text/javascript" src="js/navigation.js" defer></script>
+    <script type="text/javascript" src="js/activity_handler.js" defer></script>
 
     <link rel="stylesheet" type="text/css" href="bower_components/base/base.css">
     <link rel="stylesheet" type="text/css" href="bower_components/gaia-theme/gaia-theme.css">
@@ -31,6 +40,7 @@
     <script src="bower_components/gaia-list/gaia-list.js"></script>
     <script src="bower_components/gaia-button/gaia-button.js"></script>
     <script src="bower_components/gaia-color-picker/gaia-color-picker.js"></script>
+    <script src="bower_components/gaia-dialog/gaia-dialog.js"></script>
 
     <link rel="localization" href="data/{locale}.properties" />
     <script type="text/javascript" src="js/libs/l10n.js" defer></script>
@@ -48,6 +58,18 @@
       <gaia-header>
         <h1></h1>
       </gaia-header>
+      <gaia-list>
+        <div class='static autotheme'>
+          <a class="autotheme-command-create">
+            <h3>Autotheme</h3>
+            <i data-icon="forward-light"></i>
+          </a>
+          <a class='hide-when-no-autotheme'>
+            <div class='autotheme-palette'></div>
+            <i data-icon="close" class='autotheme-command-cancel'></i>
+          </a>
+        </div>
+      </gaia-list>
     </section>
     <section id="edit" class="panel next">
       <gaia-header>
@@ -60,12 +82,34 @@
     <div id="edit-color">
       <div id="catcher" class="cancel"></div>
       <div id="controls">
+        <div class='autotheme-palette hide-when-no-autotheme'></div>
         <gaia-color-picker value="#fff"></gaia-color-picker>
-        <div>
+        <menu class='buttons-bar'>
           <gaia-button class="cancel">Cancel</gaia-button>
           <gaia-button class="save">Save</gaia-button>
-        </div>
+        </menu>
       </div>
     </div>
+
+    <gaia-dialog id='new-theme-dialog'>
+      <h1>Create a new theme</h1>
+      <section class='new-theme-dialog-main'>
+        <label>Title: <input type='text' class='new-theme-title-input'/></label>
+        <div class='autotheme'>
+          <a class="autotheme-command-create">
+            <h3>Autotheme</h3>
+            <i data-icon="forward-light"></i>
+          </a>
+          <a class='hide-when-no-autotheme'>
+            <div class='autotheme-palette'></div>
+            <i data-icon="close" class='autotheme-command-cancel'></i>
+          </a>
+        </div>
+      </section>
+      <fieldset>
+        <button class='cancel'>Cancel</button>
+        <button class='primary confirm' disabled>Create</button>
+      </fieldset>
+    </gaia-dialog>
   </body>
 </html>
