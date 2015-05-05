@@ -170,11 +170,13 @@
       return;
     }
 
+    Navigation.pop();
+  });
+
+  Details.panel.addEventListener('Navigation:pop', function onPop() {
     window.removeEventListener('AutoTheme:palette', Details.onPalette);
-    Navigation.pop().then(() => {
-      AutoTheme.clean();
-      AutoTheme.showPalette(Details.autotheme);
-    });
+    AutoTheme.clean();
+    AutoTheme.showPalette(Details.autotheme);
   });
 
   exports.Details = Details;

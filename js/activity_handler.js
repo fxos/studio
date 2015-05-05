@@ -26,8 +26,10 @@
       }
 
       var image = activityData.blobs[0];
-      Main.createTheme();
-      AutoTheme.load(image);
+      Navigation.popToRoot().then(() => {
+        Main.createTheme();
+        AutoTheme.load(image);
+      });
     }
   };
 
