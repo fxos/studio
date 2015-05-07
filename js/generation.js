@@ -159,6 +159,8 @@
       var group;
       if (root === ':root') {
         group = 'default';
+        // Add :root CSS variables here.
+        str += '--transition-duration: 0.2s;\n';
       } else {
         group = root.split('-')[1];
       }
