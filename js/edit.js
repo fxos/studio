@@ -18,6 +18,8 @@
     autotheme: document.querySelector('#edit-color .autotheme-palette'),
 
     prepareForDisplay: function(params) {
+      var defer = new Defer();
+
       currentTheme = params.theme;
 
       this.title.textContent = params.group + ' / ' + params.section;
@@ -40,6 +42,8 @@
           var body = this.iframe.contentDocument.body;
           body.style.setProperty(key, currentSection[key]);
         });
+
+        defer.resolve();
       };
 
       Object.keys(currentSection).forEach((key) => {
@@ -72,7 +76,7 @@
       this.list.appendChild(list);
       this.list.scrollTop = 0;
 
-      return this.panel;
+      return defer.promise.then(() => this.panel);
     },
 
     pick: function(key) {
@@ -97,7 +101,6 @@
     }
 
     Navigation.pop();
-    Edit.iframe.src = '';
   });
 
   Edit.panel.addEventListener('click', function(evt) {
@@ -107,6 +110,11 @@
     }
 
     Edit.pick(target.dataset.key);
+  });
+
+  Edit.panel.addEventListener('Navigation:pop', function onPop() {
+    Edit.editColor.classList.remove('editing');
+    Edit.iframe.src = '';
   });
 
   Edit.editColor.addEventListener('click', function(evt) {
