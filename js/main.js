@@ -42,14 +42,6 @@
           list.appendChild(link);
         });
 
-        var link = document.createElement('a');
-        link.classList.add('action');
-        link.dataset.action = 'create';
-        var title = document.createElement('h3');
-        title.textContent = 'Make your own theme';
-        link.appendChild(title);
-        list.appendChild(link);
-
         this.panel.appendChild(list);
       }).catch(function(error) {
         console.log(error);
@@ -130,6 +122,10 @@
       id: themeId
     }));
   });
+
+  document.getElementById('add-theme-button').addEventListener(
+    'click', () => Main.createTheme()
+  );
 
   Main.dialog.querySelector('.cancel').addEventListener(
     'click', () => Main.onDialogCancelClicked()
