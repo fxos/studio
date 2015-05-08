@@ -117,7 +117,9 @@
     },
 
     removeTheme: function() {
-      return Storage.removeTheme(currentTheme.id);
+      return Main.promptDeleteTheme().then(function() {
+        return Storage.removeTheme(currentTheme.id);
+      });
     }
   };
 

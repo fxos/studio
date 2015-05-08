@@ -17,6 +17,7 @@
     createDialogInput: document.querySelector('.new-theme-title-input'),
     createDialogConfirm: document.querySelector('#new-theme-dialog .confirm'),
     autotheme: document.querySelector('#new-theme-dialog .autotheme-palette'),
+    deleteDialog: document.getElementById('delete-theme-dialog'),
 
     prepareForDisplay: function(params) {
       var currentList = this.panel.querySelector('gaia-list');
@@ -52,6 +53,26 @@
       });
 
       return this.panel;
+    },
+
+    promptDeleteTheme: function() {
+      this.deleteDialog.open();
+      this.deleteDialogDefer = new Defer();
+      return this.deleteDialogDefer.promise;
+    },
+
+    closeDeleteDialog: function() {
+      this.deleteDialog.close();
+      this.deleteDialogDefer = null;
+    },
+
+    onDeleteDialogCancelClicked: function() {
+      this.closeDeleteDialog();
+    },
+
+    onDeleteDialogClicked: function() {
+      this.deleteDialogDefer.resolve();
+      this.closeDeleteDialog();
     },
 
     createTheme: function() {
@@ -133,6 +154,14 @@
 
   Main.createDialog.querySelector('.confirm').addEventListener(
     'click', () => Main.onCreateDialogCreateClicked()
+  );
+
+  Main.deleteDialog.querySelector('.cancel').addEventListener(
+    'click', () => Main.onDeleteDialogCancelClicked()
+  );
+
+  Main.deleteDialog.querySelector('.confirm').addEventListener(
+    'click', () => Main.onDeleteDialogClicked()
   );
 
   exports.Main = Main;
