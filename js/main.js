@@ -13,9 +13,9 @@
     panel: document.getElementById('main'),
     header: document.querySelector('#main gaia-header'),
     title: document.querySelector('#main gaia-header h1'),
-    dialog: document.getElementById('new-theme-dialog'),
-    dialogInput: document.querySelector('.new-theme-title-input'),
-    dialogConfirm: document.querySelector('#new-theme-dialog .confirm'),
+    createDialog: document.getElementById('new-theme-dialog'),
+    createDialogInput: document.querySelector('.new-theme-title-input'),
+    createDialogConfirm: document.querySelector('#new-theme-dialog .confirm'),
     autotheme: document.querySelector('#new-theme-dialog .autotheme-palette'),
 
     prepareForDisplay: function(params) {
@@ -47,8 +47,8 @@
         console.log(error);
       });
 
-      this.dialogInput.addEventListener('input', () => {
-        this.dialogConfirm.disabled = this.dialogInput.value === '';
+      this.createDialogInput.addEventListener('input', () => {
+        this.createDialogConfirm.disabled = this.createDialogInput.value === '';
       });
 
       return this.panel;
@@ -72,14 +72,14 @@
 
     promptNewTheme() {
       window.addEventListener('AutoTheme:palette', this.onPalette);
-      this.dialog.open();
+      this.createDialog.open();
       this.createDialogDefer = new Defer();
       return this.createDialogDefer.promise;
     },
 
-    closeDialog() {
-      this.dialog.close();
-      this.dialogInput.value = '';
+    closeCreateDialog() {
+      this.createDialog.close();
+      this.createDialogInput.value = '';
       window.removeEventListener('AutoTheme:palette', this.onPalette);
       AutoTheme.clean();
       this.onPalette();
@@ -91,18 +91,18 @@
       AutoTheme.showPalette(Main.autotheme);
     },
 
-    onDialogCancelClicked() {
-      this.closeDialog();
+    onCreateDialogCancelClicked() {
+      this.closeCreateDialog();
     },
 
-    onDialogCreateClicked() {
+    onCreateDialogCreateClicked() {
       var result = {
-        title: this.dialogInput.value,
+        title: this.createDialogInput.value,
         autotheme: AutoTheme.asStorable(),
         palette: AutoTheme.palette
       };
       this.createDialogDefer.resolve(result);
-      this.closeDialog();
+      this.closeCreateDialog();
     }
   };
 
@@ -127,12 +127,12 @@
     'click', () => Main.createTheme()
   );
 
-  Main.dialog.querySelector('.cancel').addEventListener(
-    'click', () => Main.onDialogCancelClicked()
+  Main.createDialog.querySelector('.cancel').addEventListener(
+    'click', () => Main.onCreateDialogCancelClicked()
   );
 
-  Main.dialog.querySelector('.confirm').addEventListener(
-    'click', () => Main.onDialogCreateClicked()
+  Main.createDialog.querySelector('.confirm').addEventListener(
+    'click', () => Main.onCreateDialogCreateClicked()
   );
 
   exports.Main = Main;
