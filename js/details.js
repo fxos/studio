@@ -108,12 +108,9 @@
     },
 
     forkTheme: function() {
-      var title = prompt('Title');
-      if (!title) {
-        return Promise.resolve();
-      }
-
-      return Storage.forkTheme(currentTheme, title);
+      return Main.promptDuplicate().then(function(title) {
+        return Storage.forkTheme(currentTheme, title);
+      });
     },
 
     removeTheme: function() {

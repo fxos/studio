@@ -18,6 +18,10 @@
     createDialogConfirm: document.querySelector('#new-theme-dialog .confirm'),
     autotheme: document.querySelector('#new-theme-dialog .autotheme-palette'),
     deleteDialog: document.getElementById('delete-theme-dialog'),
+    duplicateDialog: document.getElementById('duplicate-theme-dialog'),
+    duplicateDialogInput: document.querySelector('.duplicate-theme-title-input'),
+    duplicateDialogConfirm: document.
+      querySelector('#duplicate-theme-dialog .confirm'),
 
     prepareForDisplay: function(params) {
       var currentList = this.panel.querySelector('gaia-list');
@@ -52,6 +56,11 @@
         this.createDialogConfirm.disabled = this.createDialogInput.value === '';
       });
 
+      this.duplicateDialogInput.addEventListener('input', () => {
+        this.duplicateDialogConfirm.disabled =
+          this.duplicateDialogInput.value === '';
+      });
+
       return this.panel;
     },
 
@@ -73,6 +82,28 @@
     onDeleteDialogClicked: function() {
       this.deleteDialogDefer.resolve();
       this.closeDeleteDialog();
+    },
+
+    promptDuplicate: function() {
+      this.duplicateDialog.open();
+      this.duplicateDialogDefer = new Defer();
+      return this.duplicateDialogDefer.promise;
+    },
+
+    closeDuplicateDialog: function() {
+      this.duplicateDialog.close();
+      this.duplicateDialogInput.value = '';
+      this.duplicateDialogDefer = null;
+    },
+
+    onDuplicateDialogCancelClicked: function() {
+      this.closeDuplicateDialog();
+    },
+
+    onDuplicateDialogClicked: function() {
+      var title = this.duplicateDialogInput.value;
+      this.duplicateDialogDefer.resolve(title);
+      this.closeDuplicateDialog();
     },
 
     createTheme: function() {
@@ -162,6 +193,14 @@
 
   Main.deleteDialog.querySelector('.confirm').addEventListener(
     'click', () => Main.onDeleteDialogClicked()
+  );
+
+  Main.duplicateDialog.querySelector('.cancel').addEventListener(
+    'click', () => Main.onDuplicateDialogCancelClicked()
+  );
+
+  Main.duplicateDialog.querySelector('.confirm').addEventListener(
+    'click', () => Main.onDuplicateDialogClicked()
   );
 
   exports.Main = Main;
