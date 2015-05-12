@@ -18,6 +18,7 @@
     title: document.querySelector('#details gaia-header h1'),
     list: document.querySelector('#details gaia-list'),
     autotheme: document.querySelector('#details .autotheme-palette'),
+    enableButton: document.getElementById('enable-theme-button'),
 
     prepareForDisplay: function(params) {
       Array.from(this.list.children).forEach((item) => {
@@ -64,33 +65,11 @@
           }, this);
         }, this);
 
-        var actions = [
-          {
-            title: 'Install this theme',
-            action: 'install'
-          },
-          {
-            title: 'Fork this theme',
-            action: 'fork'
-          },
-          {
-            title: 'Remove this theme',
-            action: 'remove',
-            css: 'destructive'
-          }
-        ];
-        actions.forEach(function(params) {
-          var link = document.createElement('a');
-          link.classList.add('action');
-          link.dataset.action = params.action;
-          if (params.css) {
-            link.classList.add(params.css);
-          }
-          var title = document.createElement('h3');
-          title.textContent = params.title;
-          link.appendChild(title);
-          this.list.appendChild(link);
-        }, this);
+        if (currentTheme.manifestURL) {
+          this.enableButton.disabled = true;
+        } else {
+          this.enableButton.disabled = false;
+        }
       }).catch(function(error) {
         console.log(error);
       }).then(() => this.panel);
@@ -126,9 +105,9 @@
     var target = evt.target;
 
     if (target.dataset.action == 'install') {
-      target.classList.add('disabled');
+      target.disabled = true;
       Details.installTheme().then(() => {
-        target.classList.remove('disabled');
+
       }).catch(console.error.bind(console));
       return;
     }
