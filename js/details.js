@@ -104,7 +104,9 @@
     },
 
     installTheme: function() {
-      return Generation.installTheme(currentTheme.id);
+      return Generation.installTheme(currentTheme.id)
+        .then(Storage.fetchTheme.bind(null, currentTheme.id))
+        .then((theme) => { currentTheme = theme; });
     },
 
     forkTheme: function() {

@@ -18,6 +18,28 @@
     window.URL.revokeObjectURL(blob);
   }
 
+  function uninstallIfNeeded(theme) {
+    if (!theme.manifestURL) {
+      return Promise.resolve();
+    }
+
+    return new Promise((resolve, reject) => {
+      var all = navigator.mozApps.mgmt.getAll();
+      all.onsuccess = (e) => {
+        var toDelete = e.target.result.find((app) => {
+          return (app.manifestURL === theme.manifestURL);
+        });
+        if (toDelete) {
+          var req = navigator.mozApps.mgmt.uninstall(toDelete);
+          req.onsuccess = req.onerror = resolve;
+        } else {
+          resolve();
+        }
+      };
+      all.onerror = resolve;
+    });
+  }
+
   function importBlob(blob) {
     console.log('importBlob');
     if (!navigator.getDeviceStorage) {
@@ -49,7 +71,7 @@
               function(app) {
                 var setting = { "theme.selected" : app.manifestURL };
                 var req = navigator.mozSettings.createLock().set(setting);
-                req.onsuccess = resolve;
+                req.onsuccess = resolve.bind(null, app.manifestURL);
                 req.onerror = sendError;
               },
               function(error) { sendError('Error importing: ' + error.name); }
@@ -135,7 +157,14 @@
           app.packageblob = packageBlob;
           return app.asBlob();
         }).then((appBlob) => {
-          return importBlob(appBlob)
+          return uninstallIfNeeded(theme)
+            .then(() => {
+              return importBlob(appBlob);
+            })
+            .then((manifestURL) => {
+              theme.manifestURL = manifestURL;
+              return Storage.updateTheme(theme);
+            })
             .then(() => Promise.resolve(image &&
               navigator.mozSettings.createLock().set({
                 'wallpaper.image': image
@@ -146,7 +175,7 @@
               proposeDownload(appBlob);
             });
         });
-   });
+    });
   }
 
   function userStyle(theme) {
