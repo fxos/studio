@@ -59,18 +59,30 @@
       <gaia-header>
         <h1></h1>
       </gaia-header>
-      <gaia-list>
-        <div class='static autotheme'>
-          <a class="autotheme-command-create">
-            <h3>Autotheme</h3>
-            <i data-icon="forward-light"></i>
-          </a>
-          <a class='hide-when-no-autotheme'>
-            <div class='autotheme-palette'></div>
-            <i data-icon="close" class='autotheme-command-cancel'></i>
-          </a>
+      <div id="details-content">
+        <div class="controls">
+          <gaia-button id="duplicate-theme-button" class="action"
+                       data-action="fork">Duplicate</gaia-button>
+          <gaia-button id="enable-theme-button" class="action primary"
+                       data-action="install">Enable</gaia-button>
         </div>
-      </gaia-list>
+        <gaia-list>
+          <div class='static autotheme'>
+            <a class="autotheme-command-create">
+              <h3>Autotheme</h3>
+              <i data-icon="forward-light"></i>
+            </a>
+            <a class='hide-when-no-autotheme'>
+              <div class='autotheme-palette'></div>
+              <i data-icon="close" class='autotheme-command-cancel'></i>
+            </a>
+          </div>
+        </gaia-list>
+        <div class="controls">
+          <gaia-button id="delete-theme-button" class="single action destructive"
+                       data-action="remove">Delete Theme</gaia-button>
+        </div>
+      </div>
     </section>
     <section id="edit" class="panel next">
       <gaia-header>

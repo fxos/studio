@@ -23,19 +23,33 @@ gaia-list h3 {
   width: calc(100% - 10px);
 }
 
-gaia-list .action {
-  text-align: center;
-  text-decoration: underline;
-  background-color: var(--button-background);
-}
-
 gaia-list .action.disabled {
   pointer-events: none;
   color: var(--header-disabled-button-color);
 }
 
-gaia-list .destructive {
-  color: var(--color-destructive);
+.controls {
+  display: flex;
+  flex-flow: row;
+  justify-content: space-around;
+  align-items: center;
+  padding: 0 0.5rem;
+}
+
+/* gaia-button forces the min-width we need to override. */
+/* Hence the !important */
+gaia-button.single {
+  min-width: 90% !important;
+}
+
+gaia-button.primary {
+  --button-background: var(--color-blue);
+  --text-color: var(--color-gamma);
+}
+
+gaia-button.destructive {
+  --button-background: var(--color-destructive);
+  --text-color: var(--color-beta);
 }
 
 a.navigation *, a.action *, a.edit * {
@@ -61,7 +75,7 @@ gaia-list a.first::before {
 }
 
 #main gaia-list,
-#details gaia-list {
+#details-content {
   margin: 0;
   padding: 0;
   width: 100%;
