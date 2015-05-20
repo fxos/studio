@@ -31,12 +31,13 @@
         });
         if (toDelete) {
           var req = navigator.mozApps.mgmt.uninstall(toDelete);
-          req.onsuccess = req.onerror = resolve;
+          req.onsuccess = resolve;
+          req.onerror = reject;
         } else {
-          resolve();
+          reject(new Error('could not find the app to uninstall'));
         }
       };
-      all.onerror = resolve;
+      all.onerror = reject;
     });
   }
 

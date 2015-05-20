@@ -42,10 +42,12 @@
     pop: function() {
       var toPop = stack.pop();
       toPop.classList.add('next');
-      stack[stack.length - 1].classList.remove('back');
+      var toDisplay = stack[stack.length - 1];
+      toDisplay.classList.remove('back');
 
       return this.waitForTransition().then(() => {
         toPop.dispatchEvent(new CustomEvent('Navigation:pop'));
+        toDisplay.dispatchEvent(new CustomEvent('Navigation:display'));
       });
     },
 

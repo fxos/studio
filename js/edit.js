@@ -7,6 +7,9 @@
   var currentSection = null;
   var currentKey = null;
 
+  var groupName = null;
+  var sectionName = null;
+
   var Edit = {
     panel: document.getElementById('edit'),
     header: document.querySelector('#edit gaia-header'),
@@ -35,6 +38,9 @@
 
       var list = document.createElement('gaia-list');
       currentSection = currentTheme.groups[params.group][params.section];
+
+      groupName = params.group;
+      sectionName = params.section;
 
       this.iframe.src = params.section + '-preview.html';
       this.iframe.onload = () => {
@@ -133,12 +139,30 @@
       elem.setAttribute('aria-label', value);
       elem.style.backgroundColor = value;
 
-      Storage.updateTheme(currentTheme).then(() => {
-        Edit.editColor.classList.remove('editing');
-        currentKey = null;
-      }).catch(function(error) {
-        console.log(error);
-      });
+      Storage.updateTheme(currentTheme)
+        .then(() => {
+          Edit.editColor.classList.remove('editing');
+          currentKey = null;
+        })
+        .then(() => {
+          if (!currentTheme.manifestURL) {
+            return Promise.resolve();
+          }
+
+          // Updating the installed theme
+          return Generation.installTheme(currentTheme.id)
+                 .then(Storage.fetchTheme.bind(null, currentTheme.id))
+                 .then((theme) => {
+                   // Refresh
+                   currentTheme = theme;
+                   currentSection =
+                     currentTheme.groups[groupName][sectionName];
+                 });
+        })
+        .catch(function(error) {
+          console.log(error);
+        });
+
       return;
     }
 

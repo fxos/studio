@@ -27,6 +27,7 @@
 
     forkTheme: function(theme, title) {
       delete theme.id;
+      delete theme.manifestURL;
       theme.title = title;
       return setTheme(theme);
     },
