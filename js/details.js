@@ -82,10 +82,14 @@
       Storage.updateTheme(currentTheme);
     },
 
+    refreshTheme: function() {
+      return Storage.fetchTheme(currentTheme.id)
+            .then((theme) => { currentTheme = theme; });
+    },
+
     installTheme: function() {
       return Generation.installTheme(currentTheme.id)
-        .then(Storage.fetchTheme.bind(null, currentTheme.id))
-        .then((theme) => { currentTheme = theme; });
+        .then(this.refreshTheme);
     },
 
     forkTheme: function() {
@@ -157,6 +161,10 @@
     window.removeEventListener('AutoTheme:palette', Details.onPalette);
     AutoTheme.clean();
     AutoTheme.showPalette(Details.autotheme);
+  });
+
+  Details.panel.addEventListener('Navigation:display', function onPop() {
+    Details.refreshTheme();
   });
 
   exports.Details = Details;
