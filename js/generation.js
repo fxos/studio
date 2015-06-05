@@ -71,12 +71,12 @@
             navigator.mozApps.mgmt.import(file).then(
               function(app) {
                 if (enable) {
-                  var setting = { "theme.selected" : app.manifestURL };
+                  var setting = { 'theme.selected' : app.manifestURL };
                   var req = navigator.mozSettings.createLock().set(setting);
                   req.onsuccess = resolve.bind(null, app.manifestURL);
                   req.onerror = sendError;
                 } else {
-                  resolve();
+                  resolve(app.manifestURL);
                 }
               },
               function(error) { sendError('Error importing: ' + error.name); }
@@ -225,10 +225,34 @@
     document.body.appendChild(override);
   }
 
+  function checkIfSelected(theme) {
+    return new Promise((resolve, reject) => {
+      var req = navigator.mozSettings.createLock().get('theme.selected');
+      req.onsuccess = function(e) {
+        resolve([(req.result['theme.selected'] == theme.manifestURL), theme]);
+      };
+      req.onerror = reject;
+    });
+  }
+
   exports.Generation = {
     installTheme: function(id, enable) {
-      return Storage.fetchTheme(id).then(exportTheme.bind(null, enable));
+      return Storage.fetchTheme(id)
+      .then(checkIfSelected)
+      .then((results) => {
+        exportTheme.apply(null, results)
+      });
     },
-    uninstallIfNeeded: uninstallIfNeeded
+    uninstallIfNeeded: function(theme) {
+      return checkIfSelected(theme)
+      .then((results) => {
+        var selected = results[0];
+        if (selected) {
+          alert("You can't remove the selected theme");
+        } else {
+          return uninstallIfNeeded(theme);
+        }
+      });
+    }
   };
 })(window);
