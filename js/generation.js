@@ -185,7 +185,9 @@
             ))
             .catch((e) => {
               console.error('Error while importing blob', e);
-              proposeDownload(appBlob);
+              // Desktop debug
+              // proposeDownload(appBlob);
+              alert('This device is not theming compatible');
             });
         });
     });
